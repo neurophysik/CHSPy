@@ -489,10 +489,12 @@ class CubicHermiteSpline(list):
 		if np.ndim(times)==0:
 			return interpolate_vec(times,self.get_anchors(times))
 		elif np.ndim(times)==1:
-			output = np.empty((times.size,self.n))
-			for i,time in enumerate(times):
-				output[i] = interpolate_vec(time,self.get_anchors(time))
-			return output
+			return np.vstack([
+					interpolate_vec(time,self.get_anchors(time))
+					for time in times
+				])
+		else:
+			raise ValueError("times is not zero- or one-dimensional sequence of numbers")
 	
 	def get_recent_state(self,t):
 		"""
