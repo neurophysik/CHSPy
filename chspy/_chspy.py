@@ -486,9 +486,9 @@ class CubicHermiteSpline(list):
 		Get the state of the spline at `times`.
 		If any time point lies outside of the anchors, the state will be extrapolated.
 		"""
-		if times.ndim==0:
+		if np.ndim(times)==0:
 			return interpolate_vec(times,self.get_anchors(times))
-		elif times.ndim==1:
+		elif np.ndim(times)==1:
 			output = np.empty((times.size,self.n))
 			for i,time in enumerate(times):
 				output[i] = interpolate_vec(time,self.get_anchors(time))
