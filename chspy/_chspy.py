@@ -449,6 +449,11 @@ class CubicHermiteSpline(list):
 			self.append(get_anchor(time))
 		self[0].happy = self[-1].happy = True
 		
+		# Insert at least one anchor, if there are only two:
+		if len(self)==2<max_anchors:
+			time = np.mean((self[0].time,self[1].time))
+			self.insert(1,get_anchor(time))
+		
 		while not all(anchor.happy for anchor in self) and len(self)<=max_anchors:
 			for i in range(len(self)-2,-1,-1):
 				# Update happiness
@@ -476,12 +481,18 @@ class CubicHermiteSpline(list):
 		s = min( self.last_index_before(time), len(self)-2 )
 		return ( self[s], self[s+1] )
 	
-	def get_state(self,time):
+	def get_state(self,times):
 		"""
-		Get the state of the spline at `time`.
-		If `time` lies outside of the anchors, the state will be extrapolated.
+		Get the state of the spline at `times`.
+		If any time point lies outside of the anchors, the state will be extrapolated.
 		"""
-		return interpolate_vec(time,self.get_anchors(time))
+		if times.ndim==0:
+			return interpolate_vec(times,self.get_anchors(times))
+		elif times.ndim==1:
+			output = np.empty((times.size,self.n))
+			for i,time in enumerate(times):
+				output[i] = interpolate_vec(time,self.get_anchors(time))
+			return output
 	
 	def get_recent_state(self,t):
 		"""

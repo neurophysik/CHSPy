@@ -230,13 +230,28 @@ class extrema_test(unittest.TestCase):
 			
 			beginning, end = sorted(np.random.uniform(spline[0].time,spline[-1].time,2))
 			times = np.linspace(beginning,end,10000)
-			values = np.vstack( spline.get_state(time) for time in times )
+			values = np.vstack([ spline.get_state(time) for time in times ])
 			
 			result = spline.extrema(beginning,end)
 			assert_allclose( result.minima, np.min(values,axis=0), atol=1e-3 )
 			assert_allclose( result.maxima, np.max(values,axis=0), atol=1e-3 )
 			assert_allclose( result.arg_min, times[np.argmin(values,axis=0)], atol=1e-3 )
 			assert_allclose( result.arg_max, times[np.argmax(values,axis=0)], atol=1e-3 )
+
+class TimeSeriesTest(unittest.TestCase):
+	def test_comparison(self):
+		interval = (-3,10)
+		t = symengine.Symbol("t")
+		spline = CubicHermiteSpline(n=2)
+		spline.from_function(
+				[symengine.sin(t),symengine.cos(t)],
+				times_of_interest = interval,
+				max_anchors = 100,
+			)
+		times = np.linspace(*interval,100)
+		evaluation = spline.get_state(times)
+		control = np.vstack((np.sin(times),np.cos(times))).T
+		assert_allclose(evaluation,control,atol=0.01)
 
 class TestErrors(unittest.TestCase):
 	def test_wrong_shape(self):

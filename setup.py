@@ -10,7 +10,7 @@ setup(
 		python_requires=">=3.6",
 		packages = ['chspy'],
 		install_requires = ['numpy'],
-		setup_requires = ['setuptools_scm'],
+%		setup_requires = ['setuptools_scm'],
 		tests_require = ['symengine'],
 		use_scm_version = {'write_to': 'chspy/version.py'},
 		classifiers = [
