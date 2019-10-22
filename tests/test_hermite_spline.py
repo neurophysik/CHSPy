@@ -62,6 +62,15 @@ class interpolation_test(unittest.TestCase):
 						diff[j](t),
 						interpolate_diff(t, j, anchors),
 					)
+	
+	def test_interpolate_anchors(self):
+		copy = spline.copy()
+		for t in np.random.uniform( spline[0].time-1, spline[-1].time+1, 20 ):
+			copy.interpolate_anchor(t)
+		
+		for t in np.random.uniform( spline[0].time-2, spline[-1].time+2, 40 ):
+			assert_allclose( copy.get_state(t), spline.get_state(t) )
+
 
 class get_anchors_test(unittest.TestCase):
 	def test_get_anchors(self):
@@ -251,6 +260,44 @@ class TimeSeriesTest(unittest.TestCase):
 		times = np.linspace(*interval,100)
 		evaluation = spline.get_state(times)
 		control = np.vstack((np.sin(times),np.cos(times))).T
+		assert_allclose(evaluation,control,atol=0.01)
+
+class TestAdd(unittest.TestCase):
+	def test_addition(self):
+		interval = (-3,2)
+		times = np.linspace(*interval,10)
+		t = symengine.Symbol("t")
+		
+		times_A = np.linspace(*interval,10)
+		sin_spline = CubicHermiteSpline(n=1)
+		sin_spline.from_function(
+				[symengine.sin(t)],
+				times_of_interest = interval,
+				max_anchors = 100,
+			)
+		sin_times = { anchor.time for anchor in sin_spline }
+		sin_evaluation = sin_spline.get_state(times)
+		
+		times_B = sorted([*interval,*np.random.uniform(*interval,10)])
+		exp_spline = CubicHermiteSpline(n=1)
+		exp_spline.from_function(
+				[symengine.exp(t)],
+				times_of_interest = interval,
+				max_anchors = 100,
+			)
+		exp_times = { anchor.time for anchor in exp_spline }
+		exp_evaluation = exp_spline.get_state(times)
+		
+		sin_spline.add(exp_spline)
+		combined = sin_spline
+		combined_times = { anchor.time for anchor in combined }
+		
+		self.assertSetEqual( sin_times|exp_times, combined_times )
+		
+		evaluation = combined.get_state(times)
+		control = np.atleast_2d( np.sin(times) + np.exp(times) ).T
+		print(control,evaluation)
+		assert_allclose(sin_evaluation+exp_evaluation,control,atol=0.01)
 		assert_allclose(evaluation,control,atol=0.01)
 
 class TestErrors(unittest.TestCase):

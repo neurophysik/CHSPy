@@ -355,10 +355,17 @@ class CubicHermiteSpline(list):
 		"""
 		return self[-1].time
 	
+	@property
+	def times(self):
+		"""
+		The times of all anchors.
+		"""
+		return [anchor.time for anchor in self]
+	
 	def last_index_before(self,time):
 		"""
 		Returns the index of the last anchor before `time`.
-		Returns the first anchor if `time` is before the first anchor.
+		Returns 0 if `time` is before the first anchor.
 		"""
 		for i in reversed(range(len(self))):
 			if self[i].time < time:
@@ -604,6 +611,20 @@ class CubicHermiteSpline(list):
 			anchor.state[indices_1] -= factor*anchor.state[indices_2]
 			anchor.diff [indices_1] -= factor*anchor.diff [indices_2]
 	
+	def interpolate_anchor(self,time):
+		"""
+		Interpolates an anchor at `time`.
+		"""
+		if time not in self.times:
+			i = self.last_index_before(time)+1
+			if time<self[0].time:
+				i = 0
+			anchors = self.get_anchors(time)
+			
+			value =     interpolate_vec(time,anchors)
+			diff = interpolate_diff_vec(time,anchors)
+			self.insert( i, (time,value,diff) )
+	
 	def truncate(self,time):
 		"""
 		Interpolates an anchor at `time` and removes all later anchors.
@@ -614,7 +635,27 @@ class CubicHermiteSpline(list):
 		value =     interpolate_vec(time,(self[i],self[i+1]))
 		diff = interpolate_diff_vec(time,(self[i],self[i+1]))
 		self[i+1] = Anchor(time,value,diff)
-		
+		self.interpolate_anchor(time)
 		self.clear_from(i+2)
 		assert len(self)>=1
 	
+	def add(self,other):
+		"""
+		Sum with another spline in place. If the other spline has an anchor that does not have the time of an existing anchor, a new anchor will be added at this time.
+		"""
+		other = other.copy()
+		times_self = set(self.times)
+		times_other = set(other.times)
+		
+		for time in times_self-times_other:
+			other.interpolate_anchor(time)
+		
+		for time in times_other-times_self:
+			self.interpolate_anchor(time)
+		
+		assert(self.times==other.times)
+		
+		for i,anchor in enumerate(other):
+			self[i].state += other[i].state
+			self[i].diff  += other[i].diff
+
