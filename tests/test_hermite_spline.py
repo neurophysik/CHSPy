@@ -262,7 +262,7 @@ class TimeSeriesTest(unittest.TestCase):
 		control = np.vstack((np.sin(times),np.cos(times))).T
 		assert_allclose(evaluation,control,atol=0.01)
 
-class TestAdd(unittest.TestCase):
+class TestPlus(unittest.TestCase):
 	def test_addition(self):
 		interval = (-3,2)
 		times = np.linspace(*interval,10)
@@ -288,7 +288,7 @@ class TestAdd(unittest.TestCase):
 		exp_times = { anchor.time for anchor in exp_spline }
 		exp_evaluation = exp_spline.get_state(times)
 		
-		sin_spline.add(exp_spline)
+		sin_spline.plus(exp_spline)
 		combined = sin_spline
 		combined_times = { anchor.time for anchor in combined }
 		

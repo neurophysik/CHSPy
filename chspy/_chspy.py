@@ -639,7 +639,7 @@ class CubicHermiteSpline(list):
 		self.clear_from(i+2)
 		assert len(self)>=1
 	
-	def add(self,other):
+	def plus(self,other):
 		"""
 		Sum with another spline in place. If the other spline has an anchor that does not have the time of an existing anchor, a new anchor will be added at this time.
 		"""
