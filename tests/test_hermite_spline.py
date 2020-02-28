@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from chspy import CubicHermiteSpline, scalar_product_interval, scalar_product_partial, norm_sq_interval, norm_sq_partial, interpolate, interpolate_diff, extrema_from_anchors
+from chspy import CubicHermiteSpline, scalar_product_interval, scalar_product_partial, norm_sq_interval, norm_sq_partial, interpolate, interpolate_diff, extrema_from_anchors, join
 
 import symengine
 import numpy as np
@@ -262,43 +262,60 @@ class TimeSeriesTest(unittest.TestCase):
 		control = np.vstack((np.sin(times),np.cos(times))).T
 		assert_allclose(evaluation,control,atol=0.01)
 
-class TestPlus(unittest.TestCase):
-	def test_addition(self):
+class TestAdditions(unittest.TestCase):
+	def setUp(self):
 		interval = (-3,2)
-		times = np.linspace(*interval,10)
+		self.times = np.linspace(*interval,10)
 		t = symengine.Symbol("t")
 		
-		times_A = np.linspace(*interval,10)
-		sin_spline = CubicHermiteSpline(n=1)
-		sin_spline.from_function(
+		self.sin_spline = CubicHermiteSpline(n=1)
+		self.sin_spline.from_function(
 				[symengine.sin(t)],
 				times_of_interest = interval,
 				max_anchors = 100,
 			)
-		sin_times = { anchor.time for anchor in sin_spline }
-		sin_evaluation = sin_spline.get_state(times)
+		self.sin_evaluation = self.sin_spline.get_state(self.times)
 		
-		times_B = sorted([*interval,*np.random.uniform(*interval,10)])
-		exp_spline = CubicHermiteSpline(n=1)
-		exp_spline.from_function(
+		self.exp_spline = CubicHermiteSpline(n=1)
+		self.exp_spline.from_function(
 				[symengine.exp(t)],
 				times_of_interest = interval,
 				max_anchors = 100,
 			)
-		exp_times = { anchor.time for anchor in exp_spline }
-		exp_evaluation = exp_spline.get_state(times)
+		self.exp_evaluation = self.exp_spline.get_state(self.times)
+	
+	def has_matched_times(self,spline):
+		self.assertSetEqual(
+				set(self.sin_spline.times) | set(self.exp_spline.times),
+				set(spline.times),
+			)
+	
+	
+	def test_plus(self):
+		combined = self.sin_spline.copy()
+		combined.plus(self.exp_spline)
 		
-		sin_spline.plus(exp_spline)
-		combined = sin_spline
-		combined_times = { anchor.time for anchor in combined }
+		evaluation = combined.get_state(self.times)
+		control = np.atleast_2d( np.sin(self.times) + np.exp(self.times) ).T
+		control_2 = self.sin_evaluation+self.exp_evaluation
 		
-		self.assertSetEqual( sin_times|exp_times, combined_times )
-		
-		evaluation = combined.get_state(times)
-		control = np.atleast_2d( np.sin(times) + np.exp(times) ).T
-		print(control,evaluation)
-		assert_allclose(sin_evaluation+exp_evaluation,control,atol=0.01)
+		self.has_matched_times(combined)
+		assert_allclose(control,control_2,atol=0.01)
 		assert_allclose(evaluation,control,atol=0.01)
+	
+	def test_join(self):
+		joined = join(self.sin_spline,self.exp_spline)
+		evaluation = joined.get_state(self.times)
+		
+		evaluation = joined.get_state(self.times)
+		control = np.vstack(( np.sin(self.times), np.exp(self.times) )).T
+		control_2 = np.hstack((self.sin_evaluation,self.exp_evaluation))
+		
+		self.has_matched_times(joined)
+		assert_allclose(control,control_2,atol=0.01)
+		assert_allclose(evaluation,control,atol=0.01)
+
+
 
 class TestErrors(unittest.TestCase):
 	def test_wrong_shape(self):

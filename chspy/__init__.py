@@ -3,6 +3,7 @@ from ._chspy import (
 		interpolate, interpolate_vec, interpolate_diff, interpolate_diff_vec,
 		extrema_from_anchors,
 		norm_sq_interval, norm_sq_partial, scalar_product_interval, scalar_product_partial,
+		match_anchors, join,
 	)
 
 try:

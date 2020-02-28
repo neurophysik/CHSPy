@@ -262,9 +262,7 @@ def extrema_from_anchors(anchors,beginning=None,end=None,target=None):
 
 class CubicHermiteSpline(list):
 	"""
-	Class for a cubic Hermite Spline of one variable (time) with `n` values.
-	This behaves like a list with additional functionalities and checks.
-	Note that the times of the anchors must always be in ascending order.
+	Class for a cubic Hermite Spline of one variable (time) with `n` values. This behaves like a list with additional functionalities and checks. Note that the times of the anchors must always be in ascending order.
 	
 	Parameters
 	----------
@@ -644,16 +642,8 @@ class CubicHermiteSpline(list):
 		Sum with another spline in place. If the other spline has an anchor that does not have the time of an existing anchor, a new anchor will be added at this time.
 		"""
 		other = other.copy()
-		times_self = set(self.times)
-		times_other = set(other.times)
-		
-		for time in times_self-times_other:
-			other.interpolate_anchor(time)
-		
-		for time in times_other-times_self:
-			self.interpolate_anchor(time)
-		
-		assert(self.times==other.times)
+		match_anchors(self,other)
+		assert self.times == other.times
 		
 		for i,anchor in enumerate(other):
 			self[i].state += other[i].state
@@ -699,5 +689,38 @@ class CubicHermiteSpline(list):
 		values = self.get_state(plot_times)[:,components]
 		return axes.plot( plot_times, values, *args, **kwargs )
 
+def match_anchors(*splines):
+	"""
+	Ensure that splines have anchors at the same times, interpolating intermediate anchors if necessary. All of this happens in place.
+	"""
+	timess = [ set(spline.times) for spline in splines ]
+	all_times = set.union(*timess)
+	for times,spline in zip(timess,splines):
+		for time in all_times-times:
+			spline.interpolate_anchor(time)
+	
+	from itertools import combinations
+	for spline_1,spline_2 in combinations(splines,2):
+		assert spline_1.times == spline_2.times == sorted(all_times)
 
+def join(*splines):
+	"""
+	Glues the splines together along the value dimension, i.e., returns a new spline that features the input splines as disjoint subsets of its components.
+	"""
+	splines = [spline.copy() for spline in splines]
+	match_anchors(*splines)
+	positions = np.cumsum([0,*(spline.n for spline in splines)])
+	n = positions[-1]
+	
+	joined_spline = CubicHermiteSpline(n=n)
+	
+	for i,time in enumerate(splines[0].times):
+		state = np.empty(n)
+		diff = np.empty(n)
+		for j,spline in enumerate(splines):
+			state[positions[j]:positions[j+1]] = spline[i].state
+			diff [positions[j]:positions[j+1]] = spline[i].diff
+		joined_spline.add((time,state,diff))
+	
+	return joined_spline
 
