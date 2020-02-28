@@ -658,4 +658,46 @@ class CubicHermiteSpline(list):
 		for i,anchor in enumerate(other):
 			self[i].state += other[i].state
 			self[i].diff  += other[i].diff
+	
+	def plot(self,axes,components="all",resolution=20,*args,**kwargs):
+		"""
+		Plots the interpolant onto the provided Matplotlib axes object. If component is `None`, all components are plotted at once. Otherwise only the selected component is plotted.
+		By default this calls `plot` with `markevery=resolution` (marking the anchors) and `marker="o"`, but you can override those arguments.
+		All further arguments are forwarded to Matplotlib’s `plot`.
+		
+		Parameters
+		----------
+		components : int, iterable of ints, or "all"
+		
+		Which components should be plotted. If `"all"`, all components will be plotted.
+		
+		resolution : int
+		
+		How often the Hermite polynomial should be evaluated for plotting between each anchor. The higher this number, the more accurate the plot.
+		"""
+		
+		assert resolution>=1, "Resolution must at least be 1."
+		
+		if components=="all":
+			components = range(self.n)
+		components = np.atleast_1d(components)
+		
+		plot_times = []
+		times = self.times
+		for i in range(len(times)-1):
+			added_points = np.linspace(
+				times[i],
+				times[i+1],
+				resolution,
+				endpoint=False,
+			)
+			plot_times.extend(added_points)
+		plot_times.append(times[-1])
+		
+		kwargs.setdefault("marker","o")
+		kwargs.setdefault("markevery",resolution)
+		values = self.get_state(plot_times)[:,components]
+		return axes.plot( plot_times, values, *args, **kwargs )
+
+
 
