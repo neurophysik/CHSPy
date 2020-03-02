@@ -481,6 +481,44 @@ class CubicHermiteSpline(list):
 				if len(self)>max_anchors:
 					break
 	
+	@classmethod
+	def from_data(cls,times,states):
+		"""
+		Creates a new cubic Hermite spline based on a provided dataset. The derivative of a given anchor is estimated from a quadratic interpolation of that anchor and the neighbouring ones. (For the first and last anchor, it’s only a linear interpolatioon.)
+
+		Parameters
+		----------
+		times : array-like
+			The times of the data points.
+		states : array-like
+			The values of the data. The first dimension has to have the same length as `times`.
+		"""
+		assert len(times)==len(states)
+		states = np.asarray(states)
+		assert states.ndim==2
+		spline = cls(n=states.shape[1])
+		
+		diffs = np.empty_like(states)
+		diffs[ 0] = (states[ 1]-states[ 0])/(times[ 1]-times[ 0])
+		diffs[-1] = (states[-1]-states[-2])/(times[-1]-times[-2])
+		
+		y_1 = states[ :-2]
+		y_2 = states[1:-1]
+		y_3 = states[2:  ]
+		t_1 = times [ :-2]
+		t_2 = times [1:-1]
+		t_3 = times [2:  ]
+		diffs[1:-1] = (
+				  y_1 * ((t_2-t_3)/(t_2-t_1)/(t_3-t_1))[:,None]
+				+ y_2 / (t_2-t_3)[:,None]
+				+ y_2 / (t_2-t_1)[:,None]
+				+ y_3 * ((t_2-t_1)/(t_3-t_1)/(t_3-t_2))[:,None]
+			)
+		
+		for anchor in zip(times,states,diffs):
+			spline.add(anchor)
+		return spline
+	
 	def get_anchors(self, time):
 		"""
 		Find the two anchors neighbouring `time`.
