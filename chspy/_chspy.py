@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+from bisect import insort, bisect_left
 
 def rel_dist(x,y):
 	x = np.asarray(x)
@@ -25,6 +26,13 @@ class Anchor(tuple):
 		self.time  = self[0]
 		self.state = self[1]
 		self.diff  = self[2]
+	
+	# This is for sorting, which is guaranteed (docs.python.org/3/howto/sorting.html) to use __lt__, and bisect_left:
+	def __lt__(self,other):
+		if isinstance(other,Anchor):
+			return self.time < other.time
+		else:
+			return self.time < float(other)
 
 def interpolate(t,i,anchors):
 	"""
@@ -320,18 +328,17 @@ class CubicHermiteSpline(list):
 	
 	def sort(self):
 		self.check_for_duplicate_times()
-		super().sort( key = lambda anchor: anchor.time )
+		super().sort()
 	
 	def check_for_duplicate_times(self):
-		if len(set(anchor.time for anchor in self)) != len(self):
+		if len({anchor.time for anchor in self}) != len(self):
 			raise ValueError("You cannot have two anchors with the same time.")
 	
 	def add(self,anchor):
 		"""
 		Inserts `anchor` at the appropriate time.
 		"""
-		super().append( self.prepare_anchor(anchor) )
-		self.sort()
+		insort(self,self.prepare_anchor(anchor))
 	
 	def clear_from(self,n):
 		"""
@@ -365,10 +372,7 @@ class CubicHermiteSpline(list):
 		Returns the index of the last anchor before `time`.
 		Returns 0 if `time` is before the first anchor.
 		"""
-		for i in reversed(range(len(self))):
-			if self[i].time < time:
-				break
-		return i
+		return bisect_left(self,float(time),lo=1)-1
 	
 	def constant(self,state,time=0):
 		"""
@@ -390,7 +394,7 @@ class CubicHermiteSpline(list):
 	
 	def from_function(self,function,times_of_interest=None,max_anchors=100,tol=5):
 		"""
-		makes the spline interpolate a given function at heuristically determined points.More precisely, starting with `times_of_interest`, anchors are added until either:
+		makes the spline interpolate a given function at heuristically determined points. More precisely, starting with `times_of_interest`, anchors are added until either:
 		
 		* anchors are closer than the tolerance
 		* the value of an anchor is approximated by the interpolant of its neighbours within the tolerance
@@ -482,8 +486,7 @@ class CubicHermiteSpline(list):
 		Find the two anchors neighbouring `time`.
 		If `time` is outside the ranges of times covered by the anchors, return the two nearest anchors.
 		"""
-		
-		s = min( self.last_index_before(time), len(self)-2 )
+		s = bisect_left(self,float(time),lo=1,hi=len(self)-1)-1
 		return ( self[s], self[s+1] )
 	
 	def get_state(self,times):
@@ -613,12 +616,10 @@ class CubicHermiteSpline(list):
 		"""
 		Interpolates an anchor at `time`.
 		"""
-		if time not in self.times:
-			i = self.last_index_before(time)+1
-			if time<self[0].time:
-				i = 0
-			anchors = self.get_anchors(time)
-			
+		i = bisect_left(self,float(time))
+		if i==len(self) or self[i].time!=time:
+			s = max(1,min(i,len(self)-1))
+			anchors = (self[s-1],self[s])
 			value =     interpolate_vec(time,anchors)
 			diff = interpolate_diff_vec(time,anchors)
 			self.insert( i, (time,value,diff) )
@@ -699,9 +700,9 @@ def match_anchors(*splines):
 		for time in all_times-times:
 			spline.interpolate_anchor(time)
 	
-	from itertools import combinations
-	for spline_1,spline_2 in combinations(splines,2):
-		assert spline_1.times == spline_2.times == sorted(all_times)
+	# from itertools import combinations
+	# for spline_1,spline_2 in combinations(splines,2):
+	# 	assert spline_1.times == spline_2.times == sorted(all_times)
 
 def join(*splines):
 	"""
