@@ -488,7 +488,7 @@ class CubicHermiteSpline(list):
 		"""
 		Creates a new cubic Hermite spline based on a provided dataset. The derivative of a given anchor is estimated from a quadratic interpolation of that anchor and the neighbouring ones. (For the first and last anchor, it’s only a linear interpolation.)
 		
-		This is only a best general guess how to interpolate the data. OFten you can apply your knowledge of the data to do better.
+		This is only a best general guess how to interpolate the data. Often you can apply your knowledge of the data to do better.
 		
 		Parameters
 		----------
