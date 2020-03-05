@@ -31,7 +31,7 @@ spline = CubicHermiteSpline(m, [
 		(
 			2.0,
 			np.random.random(m),
-			np.random.random(m)
+			np.random.random(m),
 		),
 	])
 
@@ -221,7 +221,7 @@ class extrema_test(unittest.TestCase):
 			])
 		
 		times = np.linspace(spline[0].time,spline[1].time,10000)
-		values = np.vstack( spline.get_recent_state(time) for time in times )
+		values = np.vstack([ spline.get_recent_state(time) for time in times ])
 		
 		result = extrema_from_anchors(spline[-2:])
 		assert_allclose( result.minima, np.min(values,axis=0), atol=1e-3 )
@@ -290,7 +290,6 @@ class TestAdditions(unittest.TestCase):
 				set(spline.times),
 			)
 	
-	
 	def test_plus(self):
 		combined = self.sin_spline.copy()
 		combined.plus(self.exp_spline)
@@ -314,8 +313,6 @@ class TestAdditions(unittest.TestCase):
 		self.has_matched_times(joined)
 		assert_allclose(control,control_2,atol=0.01)
 		assert_allclose(evaluation,control,atol=0.01)
-
-
 
 class TestErrors(unittest.TestCase):
 	def test_wrong_shape(self):
