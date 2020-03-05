@@ -12,6 +12,7 @@ def rel_dist(x,y):
 class Anchor(tuple):
 	"""
 	Class for a single anchor. Behaves mostly like a tuple, except that the respective components can also be accessed via the attributes `time`, `state`, and `diff`, and some copying and checks are performed upon creation.
+	Also, it implements the less-than operator (<) for comparison by time, which allows to use Python’s sort routines.
 	"""
 	def __new__( cls, time, state, diff ):
 		state = np.atleast_1d(np.array(state,dtype=float,copy=True))
@@ -139,7 +140,7 @@ def norm_sq_partial(anchors, indices, start):
 
 def scalar_product_interval(anchors, indices_1, indices_2):
 	"""
-	Returns the scalar product of the interpolants of `anchors` for `indices_1` (one side of the product) and `indices_2` (other side).
+	Returns the (integral) scalar product of the interpolants of `anchors` for `indices_1` (one side of the product) and `indices_2` (other side).
 	"""
 	q = (anchors[1].time-anchors[0].time)
 	
@@ -306,6 +307,7 @@ class CubicHermiteSpline(list):
 			self.append(anchor)
 	
 	def copy(self):
+		# Using type so this works with inheritance.
 		return type(self)(anchors=self)
 	
 	def __setitem__(self,key,item):
@@ -356,7 +358,7 @@ class CubicHermiteSpline(list):
 	@property
 	def t(self):
 		"""
-		The time of the last anchor. This may be overwritten in subclasses.
+		The time of the last anchor. This may be overwritten in subclasses such that `self.t` and the time of the last anchor are not identical anymore.
 		"""
 		return self[-1].time
 	
@@ -484,8 +486,10 @@ class CubicHermiteSpline(list):
 	@classmethod
 	def from_data(cls,times,states):
 		"""
-		Creates a new cubic Hermite spline based on a provided dataset. The derivative of a given anchor is estimated from a quadratic interpolation of that anchor and the neighbouring ones. (For the first and last anchor, it’s only a linear interpolatioon.)
-
+		Creates a new cubic Hermite spline based on a provided dataset. The derivative of a given anchor is estimated from a quadratic interpolation of that anchor and the neighbouring ones. (For the first and last anchor, it’s only a linear interpolation.)
+		
+		This is only a best general guess how to interpolate the data. OFten you can apply your knowledge of the data to do better.
+		
 		Parameters
 		----------
 		times : array-like
@@ -690,19 +694,20 @@ class CubicHermiteSpline(list):
 	
 	def plot(self,axes,components="all",resolution=20,*args,**kwargs):
 		"""
-		Plots the interpolant onto the provided Matplotlib axes object. If component is `None`, all components are plotted at once. Otherwise only the selected component is plotted.
+		Plots the interpolant onto the provided Matplotlib axes object. If `components` is `None`, all components are plotted at once. Otherwise only the selected component is plotted.
 		By default this calls `plot` with `markevery=resolution` (marking the anchors) and `marker="o"`, but you can override those arguments.
+		It will also label each component with `f"Component {i}"`.
 		All further arguments are forwarded to Matplotlib’s `plot`.
 		
 		Parameters
 		----------
 		components : int, iterable of ints, or "all"
 		
-		Which components should be plotted. If `"all"`, all components will be plotted.
+			Which components should be plotted. If `"all"`, all components will be plotted.
 		
 		resolution : int
 		
-		How often the Hermite polynomial should be evaluated for plotting between each anchor. The higher this number, the more accurate the plot.
+			How often the Hermite polynomial should be evaluated for plotting between each anchor. The higher this number, the more accurate the plot.
 		"""
 		
 		assert resolution>=1, "Resolution must at least be 1."
@@ -714,19 +719,17 @@ class CubicHermiteSpline(list):
 		plot_times = []
 		times = self.times
 		for i in range(len(times)-1):
-			added_points = np.linspace(
-				times[i],
-				times[i+1],
-				resolution,
-				endpoint=False,
-			)
+			added_points = np.linspace( times[i], times[i+1], resolution, endpoint=False )
 			plot_times.extend(added_points)
 		plot_times.append(times[-1])
 		
 		kwargs.setdefault("marker","o")
 		kwargs.setdefault("markevery",resolution)
-		values = self.get_state(plot_times)[:,components]
-		return axes.plot( plot_times, values, *args, **kwargs )
+		values = self.get_state(plot_times)
+		return [
+				axes.plot( plot_times, values[:,c], label=f"Component {c}", *args, **kwargs )
+				for c in (components)
+			]
 
 def match_anchors(*splines):
 	"""
