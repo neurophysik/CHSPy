@@ -443,6 +443,9 @@ class CubicHermiteSpline(list):
 				derivative = (array_function(time+eps)-value)/eps
 				return unhappy_anchor(time,value,derivative)
 		else:
+			import sympy
+			function = [ sympy.sympify(comp) for comp in function ]
+			
 			symbols = set.union(*(comp.free_symbols for comp in function))
 			if len(symbols)>2:
 				raise ValueError("Expressions must contain at most one free symbol")
