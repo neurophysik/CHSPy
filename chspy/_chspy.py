@@ -269,6 +269,53 @@ def extrema_from_anchors(anchors,beginning=None,end=None,target=None):
 	
 	return extrema
 
+def solve_from_anchors(anchors,i,value,beginning=None,end=None):
+	"""
+	Finds the times at which a component of the Hermite interpolant for the anchors assumes a given value and the derivatives at those points (allowing to distinguish upwards and downwards threshold crossings).
+	
+	Parameters
+	----------
+	i : integer
+		The index of the component.
+	value : float
+		The value that shall be assumed
+	beginning : float or `None`
+		Beginning of the time interval for which positions are returned. If `None`, the time of the first anchor is used.
+	end : float or `None`
+		End of the time interval for which positions are returned. If `None`, the time of the last anchor is used.
+	
+	Returns
+	-------
+	positions : list of pairs of floats
+		Each pair consists of a time where `value` is assumed and the derivative (of `component`) at that time.
+	"""
+	
+	q = (anchors[1].time-anchors[0].time)
+	retransform = lambda x: q*x+anchors[0].time
+	a = anchors[0].state[i]
+	b = anchors[0].diff[i] * q
+	c = anchors[1].state[i]
+	d = anchors[1].diff[i] * q
+	
+	left_x  = 0 if beginning is None else (beginning-anchors[0].time)/q
+	right_x = 1 if end       is None else (end      -anchors[0].time)/q
+	
+	candidates = np.roots([
+			2*a + b - 2*c + d,
+			-3*a - 2*b + 3*c - d,
+			b,
+			a - value,
+		])
+	
+	solutions = sorted(
+			retransform(candidate.real)
+			for candidate in candidates
+			if np.isreal(candidate) and left_x<=candidate<=right_x
+		)
+	
+	return [ (t,interpolate_diff(t,i,anchors)) for t in solutions ]
+
+
 class CubicHermiteSpline(list):
 	"""
 	Class for a cubic Hermite Spline of one variable (time) with `n` values. This behaves like a list with additional functionalities and checks. Note that the times of the anchors must always be in ascending order.
@@ -590,6 +637,9 @@ class CubicHermiteSpline(list):
 		beginning = self[ 0].time if beginning is None else beginning
 		end       = self[-1].time if end       is None else end
 		
+		if not self[0].time <= beginning < end <= self[-1].time:
+			raise ValueError("Beginning and end must in the time interval spanned by the anchors.")
+		
 		extrema = Extrema(self.n)
 		
 		for i in range(self.last_index_before(beginning),len(self)-1):
@@ -604,6 +654,55 @@ class CubicHermiteSpline(list):
 				)
 		
 		return extrema
+
+	def solve(self,i,value,beginning=None,end=None):
+		"""
+		Finds the times at which a component of the spline assumes a given value and the derivatives at those points (allowing to distinguish upwards and downwards threshold crossings). This will not work well if the spline is constantly at the given value for some interval.
+		
+		Parameters
+		----------
+		i : integer
+			The index of the component.
+		value : float
+			The value that shall be assumed
+		beginning : float or `None`
+			Beginning of the time interval for which solutions are returned. If `None`, the time of the first anchor is used.
+		end : float or `None`
+			End of the time interval for which solutions are returned. If `None`, the time of the last anchor is used.
+		
+		Returns
+		-------
+		positions : list of pairs of floats
+			Each pair consists of a time where `value` is assumed and the derivative (of `component`) at that time.
+		"""
+		
+		beginning = self[ 0].time if beginning is None else beginning
+		end       = self[-1].time if end       is None else end
+		
+		if not self[0].time <= beginning < end <= self[-1].time:
+			raise ValueError("Beginning and end must in the time interval spanned by the anchors.")
+		
+		extrema = Extrema(self.n)
+		
+		sols = []
+		
+		for j in range(self.last_index_before(beginning),len(self)-1):
+			if self[j].time>end:
+				break
+			
+			new_sols = solve_from_anchors(
+					anchors = ( self[j], self[j+1] ),
+					i = i,
+					value = value,
+					beginning = max( beginning, self[j  ].time ),
+					end       = min( end      , self[j+1].time ),
+				)
+			
+			if sols and new_sols and sols[-1][0]==new_sols[0][0]:
+				del new_sols[0]
+			sols.extend(new_sols)
+		
+		return sols
 	
 	def norm(self, delay, indices):
 		"""

@@ -247,6 +247,30 @@ class extrema_test(unittest.TestCase):
 			assert_allclose( result.arg_min, times[np.argmin(values,axis=0)], atol=1e-3 )
 			assert_allclose( result.arg_max, times[np.argmax(values,axis=0)], atol=1e-3 )
 
+class TestSolving(unittest.TestCase):
+	def test_random_function(self):
+		roots = np.sort(np.random.normal(size=5))
+		value = np.random.normal()
+		t = symengine.Symbol("t")
+		function = np.prod([t-root for root in roots]) + value
+		
+		i = 1
+		spline = CubicHermiteSpline(n=3)
+		spline.from_function(
+				[10,function,10],
+				times_of_interest = ( min(roots)-0.01, max(roots)+0.01 ),
+				max_anchors = 1000,
+				tol = 7,
+			)
+		
+		solutions = spline.solve(i=i,value=value)
+		sol_times = [ sol[0] for sol in solutions ]
+		assert_allclose( spline.get_state(sol_times)[:,i], value )
+		assert_allclose( [sol[0] for sol in solutions], roots, atol=1e-3 )
+		for time,diff in solutions:
+			true_diff = float(function.diff(t).subs({t:time}))
+			self.assertAlmostEqual( true_diff, diff, places=5 )
+
 class TimeSeriesTest(unittest.TestCase):
 	def test_comparison(self):
 		interval = (-3,10)
