@@ -3,6 +3,7 @@
 
 import numpy as np
 from bisect import insort, bisect_left
+from warnings import warn
 
 def rel_dist(x,y):
 	x = np.asarray(x)
