@@ -35,6 +35,19 @@ spline = CubicHermiteSpline(m, [
 		),
 	])
 
+class index_finders_test(unittest.TestCase):
+	def test_last_index_before(self):
+		assert spline.last_index_before( -1) == 0
+		assert spline.last_index_before(0.5) == 0
+		assert spline.last_index_before(  1) == 1
+		assert spline.last_index_before(  3) == 2
+	
+	def test_first_index_after(self):
+		assert spline.first_index_after( -1) == 0
+		assert spline.first_index_after(  0) == 1
+		assert spline.first_index_after(  1) == 2
+		assert spline.first_index_after(  3) == 2
+
 class interpolation_test(unittest.TestCase):
 	def test_anchors(self):
 		for s in range(len(spline)-1):

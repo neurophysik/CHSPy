@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from bisect import insort, bisect_left
+from bisect import insort, bisect_left, bisect_right
 from warnings import warn
 
 def rel_dist(x,y):
@@ -35,6 +35,12 @@ class Anchor(tuple):
 			return self.time < other.time
 		else:
 			return self.time < float(other)
+	
+	def __gt__(self,other):
+		if isinstance(other,Anchor):
+			return self.time > other.time
+		else:
+			return self.time > float(other)
 
 def interpolate(t,i,anchors):
 	"""
@@ -330,6 +336,7 @@ class CubicHermiteSpline(list):
 		If `n` is `None` and this is an instance of CubicHermiteSpline, all properties are copied from it.
 	"""
 	def __init__(self,n=None,anchors=()):
+		self._times = None
 		if n is None:
 			assert isinstance(anchors,CubicHermiteSpline)
 			CubicHermiteSpline.__init__( self, anchors.n, anchors)
@@ -345,12 +352,14 @@ class CubicHermiteSpline(list):
 		return x
 	
 	def append(self,anchor):
+		self._times = None
 		anchor = self.prepare_anchor(anchor)
 		if self and anchor.time <= self[-1].time:
 			raise ValueError("Anchor must follow last one in time. Consider using `add` instead.")
 		super().append(anchor)
 	
 	def extend(self,anchors):
+		self._times = None
 		for anchor in anchors:
 			self.append(anchor)
 	
@@ -365,6 +374,7 @@ class CubicHermiteSpline(list):
 				or  (key!=-1 and key!= len(self)-1 and self[key+1].time<=anchor.time)
 			):
 			raise ValueError("Anchor’s time does not fit.")
+		self._times = None
 		super().__setitem__(key,anchor)
 	
 	def insert(self,key,item):
@@ -374,11 +384,13 @@ class CubicHermiteSpline(list):
 				or  (            key!= len(self) and self[key  ].time<=anchor.time)
 			):
 			raise ValueError("Anchor’s time does not fit. Consider using `add` instead")
+		self._times = None
 		super().insert(key,anchor)
 	
 	def sort(self):
 		self.check_for_duplicate_times()
 		super().sort()
+		self._times = None
 	
 	def check_for_duplicate_times(self):
 		if len({anchor.time for anchor in self}) != len(self):
@@ -389,6 +401,15 @@ class CubicHermiteSpline(list):
 		Inserts `anchor` at the appropriate time.
 		"""
 		insort(self,self.prepare_anchor(anchor))
+		self._times = None
+	
+	def pop(self,index=-1):
+		self._times = None
+		return super().pop(index)
+	
+	def remove(self,value):
+		self._times = None
+		super().remove(value)
 	
 	def clear_from(self,n):
 		"""
@@ -399,6 +420,7 @@ class CubicHermiteSpline(list):
 	
 	def clear(self):
 		super().__init__()
+		self._times = None
 	
 	def reverse(self):
 		raise AssertionError("Anchors must be ordered by time. Therefore this does not make sense.")
@@ -415,7 +437,9 @@ class CubicHermiteSpline(list):
 		"""
 		The times of all anchors.
 		"""
-		return [anchor.time for anchor in self]
+		if self._times is None:
+			self._times = [anchor.time for anchor in self]
+		return self._times
 	
 	def last_index_before(self,time):
 		"""
@@ -423,6 +447,13 @@ class CubicHermiteSpline(list):
 		Returns 0 if `time` is before the first anchor.
 		"""
 		return bisect_left(self,float(time),lo=1)-1
+	
+	def first_index_after(self,time):
+		"""
+		Returns the index of the first anchor after `time`.
+		If `time` is after the last anchors, the latter’s index is returned.
+		"""
+		return bisect_right(self,float(time),hi=len(self)-1)
 	
 	def constant(self,state,time=0):
 		"""
