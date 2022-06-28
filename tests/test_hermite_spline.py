@@ -268,8 +268,7 @@ class TestSolving(unittest.TestCase):
 		function = np.prod([t-root for root in roots]) + value
 		
 		i = 1
-		spline = CubicHermiteSpline(n=3)
-		spline.from_function(
+		spline = CubicHermiteSpline.from_func(
 				[10,function,10],
 				times_of_interest = ( min(roots)-0.01, max(roots)+0.01 ),
 				max_anchors = 1000,
@@ -288,8 +287,7 @@ class TimeSeriesTest(unittest.TestCase):
 	def test_comparison(self):
 		interval = (-3,10)
 		t = symengine.Symbol("t")
-		spline = CubicHermiteSpline(n=2)
-		spline.from_function(
+		spline = CubicHermiteSpline.from_func(
 				[symengine.sin(t),symengine.cos(t)],
 				times_of_interest = interval,
 				max_anchors = 100,
@@ -305,16 +303,14 @@ class TestAdditions(unittest.TestCase):
 		self.times = np.linspace(*interval,10)
 		t = symengine.Symbol("t")
 		
-		self.sin_spline = CubicHermiteSpline(n=1)
-		self.sin_spline.from_function(
+		self.sin_spline = CubicHermiteSpline.from_func(
 				[symengine.sin(t)],
 				times_of_interest = interval,
 				max_anchors = 100,
 			)
 		self.sin_evaluation = self.sin_spline.get_state(self.times)
 		
-		self.exp_spline = CubicHermiteSpline(n=1)
-		self.exp_spline.from_function(
+		self.exp_spline = CubicHermiteSpline.from_func(
 				[symengine.exp(t)],
 				times_of_interest = interval,
 				max_anchors = 100,

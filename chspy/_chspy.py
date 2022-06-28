@@ -475,29 +475,7 @@ class CubicHermiteSpline(list):
 	
 	def from_function(self,function,times_of_interest=None,max_anchors=100,tol=5):
 		"""
-		makes the spline interpolate a given function at heuristically determined points. More precisely, starting with `times_of_interest`, anchors are added until either:
-		
-		* anchors are closer than the tolerance
-		* the value of an anchor is approximated by the interpolant of its neighbours within the tolerance
-		* the maximum number of anchors is reached.
-
-		This removes possibly previously existing anchors.
-		
-		Parameters
-		----------
-		function : callable or iterable of SymPy/SymEngine expressions
-			The function to be interpolated.
-			If callable, this is interpreted like a regular function.
-			If an iterable of expressions, each expression represents the respective component of the function.
-		
-		times_of_interest : iterable of numbers
-			Initial set of time points considered for the interpolation. All created anhcors will between the minimal and maximal timepoint.
-		
-		max_anchors : positive integer
-			The maximum number of anchors that this routine will create (including those for the `times_of_interest`).
-		
-		tol : integer
-			This is a parameter for the heuristics, more precisely the number of digits considered for tolerance in several places.
+		Like `from_func` except for not being a class method and overwriting previously existing anchors. In most cases, you want to use `from_func` instead.
 		"""
 		
 		assert tol>=0, "tol must be non-negative."
@@ -505,7 +483,7 @@ class CubicHermiteSpline(list):
 		assert len(times_of_interest)>=2, "I need at least two time points of interest."
 		
 		if self:
-			warn("The spline already contains points. This will remove them. Be sure that you really want this.")
+			warn("The spline already contains points. This will remove them. Be sure that you really want this. If not, consider using `from_func`.")
 			self.clear()
 		
 		# A happy anchor is sufficiently interpolated by its neighbours, temporally close to them, or at the border of the interval.
@@ -564,6 +542,44 @@ class CubicHermiteSpline(list):
 				
 				if len(self)>max_anchors:
 					break
+	
+	@classmethod
+	def from_func(cls,function,times_of_interest=None,max_anchors=100,tol=5):
+		"""
+		makes the spline interpolate a given function at heuristically determined points. More precisely, starting with `times_of_interest`, anchors are added until either:
+		
+		* anchors are closer than the tolerance
+		* the value of an anchor is approximated by the interpolant of its neighbours within the tolerance
+		* the maximum number of anchors is reached.
+
+		This removes possibly previously existing anchors.
+		
+		Parameters
+		----------
+		function : callable or iterable of SymPy/SymEngine expressions
+			The function to be interpolated.
+			If callable, this is interpreted like a regular function.
+			If an iterable of expressions, each expression represents the respective component of the function.
+		
+		times_of_interest : iterable of numbers
+			Initial set of time points considered for the interpolation. All created anhcors will between the minimal and maximal timepoint.
+		
+		max_anchors : positive integer
+			The maximum number of anchors that this routine will create (including those for the `times_of_interest`).
+		
+		tol : integer
+			This is a parameter for the heuristics, more precisely the number of digits considered for tolerance in several places.
+		"""
+		
+		if callable(function):
+			test_time = times_of_interest[0] if times_of_interest else 0
+			n = len(function(test_time))
+		else:
+			n = len(function)
+		
+		spline = cls(n=n)
+		spline.from_function(function,times_of_interest,max_anchors,tol)
+		return spline
 	
 	@classmethod
 	def from_data(cls,times,states):
