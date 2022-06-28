@@ -558,7 +558,7 @@ class CubicHermiteSpline(list):
 		----------
 		function : callable or iterable of SymPy/SymEngine expressions
 			The function to be interpolated.
-			If callable, this is interpreted like a regular function.
+			If callable, this is interpreted like a regular function mapping a time point to a state vector (as an iterable).
 			If an iterable of expressions, each expression represents the respective component of the function.
 		
 		times_of_interest : iterable of numbers
