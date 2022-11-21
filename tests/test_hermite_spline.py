@@ -2,11 +2,18 @@
 # -*- coding: utf-8 -*-
 
 from chspy import CubicHermiteSpline, scalar_product_interval, scalar_product_partial, norm_sq_interval, norm_sq_partial, interpolate, interpolate_diff, extrema_from_anchors, join
+from chspy._chspy import rel_dist
 
 import symengine
 import numpy as np
 from numpy.testing import assert_allclose
 import unittest
+
+class rel_dist_test(unittest.TestCase):
+	def test_rel_dist(self):
+		assert_allclose( rel_dist([1,2],[5,6]), 5/3 )
+		assert rel_dist([0,0],[0,0]) == 0
+
 
 m = 4
 

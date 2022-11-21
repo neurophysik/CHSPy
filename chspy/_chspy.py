@@ -8,7 +8,10 @@ from warnings import warn
 def rel_dist(x,y):
 	x = np.asarray(x)
 	y = np.asarray(y)
-	return np.linalg.norm(x-y)/np.linalg.norm(np.mean((x,y)))
+	if np.all(np.logical_and(x==0,y==0)):
+		return 0
+	else:
+		return np.linalg.norm((x-y)/np.mean((x,y),axis=0))
 
 class Anchor(tuple):
 	"""
