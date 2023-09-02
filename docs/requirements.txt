@@ -1,3 +1,4 @@
 numpydoc
 matplotlib
 setuptools_scm
+chspy
