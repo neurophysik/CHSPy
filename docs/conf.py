@@ -44,6 +44,8 @@ plot_html_show_source_link = False
 numpydoc_show_class_members = False
 autodoc_member_order = 'bysource'
 
+toc_object_entries_show_parents = 'hide'
+
 def on_missing_reference(app, env, node, contnode):
 	if node['reftype'] == 'any':
 		return contnode
