@@ -325,6 +325,8 @@ def solve_from_anchors(anchors,i,value,beginning=None,end=None,target='state'):
 			2*(-3*p0 - 2*m0 + 3*p1 - m1),
 			m0-value*q,
 		])
+	else:
+		raise ValueError("Invalid target for solve method. Supported targets are 'state' and 'diff'.")
 
 	solutions = sorted(
 			retransform(candidate.real)
