@@ -5,6 +5,7 @@ from chspy import CubicHermiteSpline, scalar_product_interval, scalar_product_pa
 from chspy._chspy import rel_dist
 
 import symengine
+import sympy
 import numpy as np
 from numpy.testing import assert_allclose
 import unittest
@@ -269,57 +270,33 @@ class extrema_test(unittest.TestCase):
 
 class TestSolving(unittest.TestCase):
 	def test_random_function(self):
-		roots = np.sort(np.random.normal(size=5))
-		value = np.random.normal()
-		t = symengine.Symbol("t")
-		function = np.prod([t-root for root in roots]) + value
-		
-		i = 1
-		spline = CubicHermiteSpline.from_func(
-				[10,function,10],
-				times_of_interest = ( min(roots)-0.01, max(roots)+0.01 ),
-				max_anchors = 1000,
-				tol = 7,
-			)
-		
-		solutions = spline.solve(i=i,value=value)
-		sol_times = [ sol[0] for sol in solutions ]
-		assert_allclose( spline.get_state(sol_times)[:,i], value )
-		assert_allclose( [sol[0] for sol in solutions], roots, atol=1e-3 )
-		for time,diff in solutions:
-			true_diff = float(function.diff(t).subs({t:time}))
-			self.assertAlmostEqual( true_diff, diff, places=5 )
-
-	def test_solve_with_target(self):
-		roots = np.sort(np.random.normal(size=5))
-		value = np.random.normal()
-		t = symengine.Symbol("t")
-		function = np.prod([t - root for root in roots]) + value
-		diff_function = function.diff(t)
-
-		i = 1
-		spline = CubicHermiteSpline.from_func(
-			[10, function, 10],
-			times_of_interest=(min(roots) - 0.01, max(roots) + 0.01),
-			max_anchors=1000,
-			tol=7,
-		)
-
-		# test for target='state'
-		state_solutions = spline.solve(i=i, value=value, target='state')
-		state_sol_times = [sol[0] for sol in state_solutions]
-		assert_allclose(spline.get_state(state_sol_times)[:, i], value)
-		assert_allclose([sol[0] for sol in state_solutions], roots, atol=1e-3)
-		for time, diff in state_solutions:
-			true_diff = float(function.diff(t).subs({t: time}))
-			self.assertAlmostEqual(true_diff, diff, places=5)
-
-		# test for target='diff'
-		diff_value = np.random.normal()  
-		diff_solutions = spline.solve(i=i, value=diff_value, target='diff')
-		for time, diff in diff_solutions:
-			true_diff = float(diff_function.subs({t: time}))
-			self.assertAlmostEqual(true_diff, diff, places=5)
+		for solve_derivative in [False,True]:
+			roots = np.sort(np.random.normal(size=5))
+			value = np.random.normal()
+			t = symengine.Symbol("t")
+			function = np.prod([t-root for root in roots]) + value
+			if solve_derivative:
+				function = sympy.integrate(function,[t]) + np.random.random()
+			
+			i = 1
+			spline = CubicHermiteSpline.from_func(
+					[10,function,10],
+					times_of_interest = ( min(roots)-0.01, max(roots)+0.01 ),
+					max_anchors = 1000,
+					tol = 7,
+				)
+			
+			solutions = spline.solve(i=i,value=value,solve_derivative=solve_derivative)
+			sol_times = [ sol[0] for sol in solutions ]
+			assert_allclose( sol_times, roots, atol=1e-3 )
+			if solve_derivative:
+				for time,diff in solutions:
+					self.assertAlmostEqual( value, diff, places=5 )
+			else:
+				assert_allclose( spline.get_state(sol_times)[:,i], value )
+				for time,diff in solutions:
+					true_diff = float(function.diff(t).subs({t:time}))
+					self.assertAlmostEqual( true_diff, diff, places=5 )
 
 class TimeSeriesTest(unittest.TestCase):
 	def test_comparison(self):
