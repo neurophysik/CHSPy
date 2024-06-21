@@ -279,7 +279,7 @@ def extrema_from_anchors(anchors,beginning=None,end=None,target=None):
 	
 	return extrema
 
-def solve_from_anchors(anchors,i,value,beginning=None,end=None,target='state'):
+def solve_from_anchors(anchors,i,value,beginning=None,end=None,solve_derivative=False):
 	"""
 	Finds the times at which a component of the Hermite interpolant for the anchors assumes a given value and the derivatives at those points (allowing to distinguish upwards and downwards threshold crossings).
 	
@@ -293,8 +293,8 @@ def solve_from_anchors(anchors,i,value,beginning=None,end=None,target='state'):
 		Beginning of the time interval for which positions are returned. If `None`, the time of the first anchor is used.
 	end : float or `None`
 		End of the time interval for which positions are returned. If `None`, the time of the last anchor is used.
-	target : string
-			The spline value to solve for: 'state' or 'diff'. Defaults to 'state'. 
+	solve_derivative : bool
+		Whether to find where the derivative (instead of the state) assumes a given value.
 	
 	Returns
 	-------
@@ -312,22 +312,20 @@ def solve_from_anchors(anchors,i,value,beginning=None,end=None,target='state'):
 	left_x  = 0 if beginning is None else (beginning-anchors[0].time)/q
 	right_x = 1 if end       is None else (end      -anchors[0].time)/q
 	
-	if target == 'state':
+	if solve_derivative:
+		candidates = np.roots([
+				3 * (2*p0 + m0 - 2*p1 + m1),
+				2 * (-3*p0 - 2*m0 + 3*p1 - m1),
+				m0 - value*q,
+			])
+	else:
 		candidates = np.roots([
 				2*p0 + m0 - 2*p1 + m1,
 				-3*p0 - 2*m0 + 3*p1 - m1,
 				m0,
 				p0 - value,
 			])
-	elif target == 'diff':
-		candidates = np.roots([
-			3*(2*p0 + m0 - 2*p1 + m1),
-			2*(-3*p0 - 2*m0 + 3*p1 - m1),
-			m0-value*q,
-		])
-	else:
-		raise ValueError("Invalid target for solve method. Supported targets are 'state' and 'diff'.")
-
+	
 	solutions = sorted(
 			retransform(candidate.real)
 			for candidate in candidates
@@ -717,7 +715,7 @@ class CubicHermiteSpline(list):
 		
 		return extrema
 
-	def solve(self,i,value,beginning=None,end=None,target='state'):
+	def solve(self,i,value,beginning=None,end=None,solve_derivative=False):
 		"""
 		Finds the times at which a component of the spline assumes a given value and the derivatives at those points (allowing to distinguish upwards and downwards threshold crossings). This will not work well if the spline is constantly at the given value for some interval.
 		
@@ -731,8 +729,9 @@ class CubicHermiteSpline(list):
 			Beginning of the time interval for which solutions are returned. If `None`, the time of the first anchor is used.
 		end : float or `None`
 			End of the time interval for which solutions are returned. If `None`, the time of the last anchor is used.
-		target : string
-			The spline value to solve for: 'state' or 'diff'. Defaults to 'state'. 
+		solve_derivative : bool
+			Whether to find where the derivative (instead of the state) assumes a given value.
+		
 		Returns
 		-------
 		positions : list of pairs of floats
@@ -759,7 +758,7 @@ class CubicHermiteSpline(list):
 					value = value,
 					beginning = max( beginning, self[j  ].time ),
 					end       = min( end      , self[j+1].time ),
-					target = target,
+					solve_derivative = solve_derivative,
 				)
 			
 			if sols and new_sols and sols[-1][0]==new_sols[0][0]:
