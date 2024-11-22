@@ -42,4 +42,4 @@ include = [
 ]
 
 [tool.setuptools_scm]
-version_file = "chspy/version.py"
+write_to = "chspy/version.py"
