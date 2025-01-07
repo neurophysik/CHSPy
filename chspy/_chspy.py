@@ -270,7 +270,7 @@ def extrema_from_anchors(anchors,beginning=None,end=None,target=None):
 	A = 1/(2*a + b - 2*c + d)
 	B = a + 2*b/3 - c + d/3
 	for sign in (-1,1):
-		with np.errstate(invalid='ignore'):
+		with np.errstate(invalid="ignore"):
 			x = (B+sign*np.sqrt(radicant)/3)*A
 			extrema.update(
 					retransform(x),
