@@ -1,6 +1,5 @@
 import os
 import sys
-from unittest.mock import MagicMock as Mock
 
 from setuptools_scm import get_version
 

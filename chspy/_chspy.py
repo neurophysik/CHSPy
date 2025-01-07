@@ -624,7 +624,7 @@ class CubicHermiteSpline(list):
 		t_2 = times [1:-1]
 		t_3 = times [2:  ]
 		diffs[1:-1] = (
-				  y_1 * ((t_2-t_3)/(t_2-t_1)/(t_3-t_1))[:,None]
+				y_1 * ((t_2-t_3)/(t_2-t_1)/(t_3-t_1))[:,None]
 				+ y_2 / (t_2-t_3)[:,None]
 				+ y_2 / (t_2-t_1)[:,None]
 				+ y_3 * ((t_2-t_1)/(t_3-t_1)/(t_3-t_2))[:,None]
@@ -664,7 +664,7 @@ class CubicHermiteSpline(list):
 		"""
 		anchors = self[-2], self[-1]
 		output = interpolate_vec(t,anchors)
-		assert type(output) == np.ndarray
+		assert type(output) is np.ndarray
 		return output
 	
 	def get_current_state(self):
@@ -744,8 +744,6 @@ class CubicHermiteSpline(list):
 		
 		if not self[0].time <= beginning < end <= self[-1].time:
 			raise ValueError("Beginning and end must in the time interval spanned by the anchors.")
-		
-		extrema = Extrema(self.n)
 		
 		sols = []
 		

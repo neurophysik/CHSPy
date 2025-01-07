@@ -151,11 +151,11 @@ class metrics_test(unittest.TestCase):
 		for t in np.linspace(start,end,N):
 			anchors = self.spline.get_anchors(t)
 			bf_sp_sq += (
-				  interpolate(t, 0, anchors)
+				interpolate(t, 0, anchors)
 				* interpolate(t, 2, anchors)
 				* factor)
 			bf_sp_sq += (
-				  interpolate(t, 1, anchors)
+				interpolate(t, 1, anchors)
 				* interpolate(t, 3, anchors)
 				* factor)
 		
