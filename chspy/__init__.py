@@ -1,10 +1,5 @@
-from ._chspy import (
-		Anchor, CubicHermiteSpline, Extrema,
-		interpolate, interpolate_vec, interpolate_diff, interpolate_diff_vec,
-		extrema_from_anchors,
-		norm_sq_interval, norm_sq_partial, scalar_product_interval, scalar_product_partial,
-		match_anchors, join,
-	)
+from ._chspy import Anchor, CubicHermiteSpline, Extrema, extrema_from_anchors, interpolate, interpolate_diff, interpolate_diff_vec, interpolate_vec, join, match_anchors, norm_sq_interval, norm_sq_partial, scalar_product_interval, scalar_product_partial
+
 
 try:
 	from .version import version as __version__

@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import numpy as np
-from bisect import insort, bisect_left, bisect_right
+from bisect import bisect_left, bisect_right, insort
 from warnings import warn
+
+import numpy as np
+
 
 def rel_dist(x,y):
 	x = np.asarray(x)

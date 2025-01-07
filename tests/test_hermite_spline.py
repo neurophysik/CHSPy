@@ -1,14 +1,16 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from chspy import CubicHermiteSpline, scalar_product_interval, scalar_product_partial, norm_sq_interval, norm_sq_partial, interpolate, interpolate_diff, extrema_from_anchors, join
-from chspy._chspy import rel_dist
+import unittest
 
+import numpy as np
 import symengine
 import sympy
-import numpy as np
 from numpy.testing import assert_allclose
-import unittest
+
+from chspy import CubicHermiteSpline, extrema_from_anchors, interpolate, interpolate_diff, join, norm_sq_interval, norm_sq_partial, scalar_product_interval, scalar_product_partial
+from chspy._chspy import rel_dist
+
 
 class rel_dist_test(unittest.TestCase):
 	def test_rel_dist(self):

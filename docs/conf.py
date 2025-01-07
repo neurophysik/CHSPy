@@ -1,7 +1,9 @@
-import sys
 import os
-from setuptools_scm import get_version
+import sys
 from unittest.mock import MagicMock as Mock
+
+from setuptools_scm import get_version
+
 
 # Mocking to make RTD autobuild the documentation.
 autodoc_mock_imports = ['numpy']
