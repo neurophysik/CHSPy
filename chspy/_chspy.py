@@ -1,9 +1,10 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
+
+from bisect import bisect_left, bisect_right, insort
+from warnings import warn
 
 import numpy as np
-from bisect import insort, bisect_left, bisect_right
-from warnings import warn
+
 
 def rel_dist(x,y):
 	x = np.asarray(x)
@@ -131,7 +132,7 @@ def norm_sq_interval(anchors, indices):
 
 def norm_sq_partial(anchors, indices, start):
 	"""
-	Returns the sqared norm of the interpolant of `anchors` for the `indices`, but only taking into account the time after `start`.
+	Returns the squared norm of the interpolant of `anchors` for the `indices`, but only taking into account the time after `start`.
 	"""
 	q = (anchors[1].time-anchors[0].time)
 	z = (start-anchors[1].time) / q
@@ -201,7 +202,7 @@ def scalar_product_partial(anchors, indices_1, indices_2, start):
 			vector_2, [1,2]
 		)*q
 
-class Extrema(object):
+class Extrema:
 	"""
 	Class for containing the extrema and their positions in `n` dimensions. These can be accessed via the attributes `minima`, `maxima`, `arg_min`, and `arg_max`.
 	"""
@@ -269,7 +270,7 @@ def extrema_from_anchors(anchors,beginning=None,end=None,target=None):
 	A = 1/(2*a + b - 2*c + d)
 	B = a + 2*b/3 - c + d/3
 	for sign in (-1,1):
-		with np.errstate(invalid='ignore'):
+		with np.errstate(invalid="ignore"):
 			x = (B+sign*np.sqrt(radicant)/3)*A
 			extrema.update(
 					retransform(x),
@@ -479,7 +480,7 @@ class CubicHermiteSpline(list):
 		"""
 		
 		if self:
-			warn("The spline already contains points. This will remove them. Be sure that you really want this.")
+			warn("The spline already contains points. This will remove them. Be sure that you really want this.", stacklevel=2)
 			self.clear()
 		
 		self.append(( time-1., state, np.zeros_like(state) ))
@@ -495,7 +496,7 @@ class CubicHermiteSpline(list):
 		assert len(times_of_interest)>=2, "I need at least two time points of interest."
 		
 		if self:
-			warn("The spline already contains points. This will remove them. Be sure that you really want this. If not, consider using `from_func`.")
+			warn("The spline already contains points. This will remove them. Be sure that you really want this. If not, consider using `from_func`.", stacklevel=2)
 			self.clear()
 		
 		# A happy anchor is sufficiently interpolated by its neighbours, temporally close to them, or at the border of the interval.
@@ -623,7 +624,7 @@ class CubicHermiteSpline(list):
 		t_2 = times [1:-1]
 		t_3 = times [2:  ]
 		diffs[1:-1] = (
-				  y_1 * ((t_2-t_3)/(t_2-t_1)/(t_3-t_1))[:,None]
+				y_1 * ((t_2-t_3)/(t_2-t_1)/(t_3-t_1))[:,None]
 				+ y_2 / (t_2-t_3)[:,None]
 				+ y_2 / (t_2-t_1)[:,None]
 				+ y_3 * ((t_2-t_1)/(t_3-t_1)/(t_3-t_2))[:,None]
@@ -663,7 +664,7 @@ class CubicHermiteSpline(list):
 		"""
 		anchors = self[-2], self[-1]
 		output = interpolate_vec(t,anchors)
-		assert type(output) == np.ndarray
+		assert type(output) is np.ndarray
 		return output
 	
 	def get_current_state(self):
@@ -744,8 +745,6 @@ class CubicHermiteSpline(list):
 		if not self[0].time <= beginning < end <= self[-1].time:
 			raise ValueError("Beginning and end must in the time interval spanned by the anchors.")
 		
-		extrema = Extrema(self.n)
-		
 		sols = []
 		
 		for j in range(self.last_index_before(beginning),len(self)-1):
@@ -779,8 +778,8 @@ class CubicHermiteSpline(list):
 		norm_sq = norm_sq_partial(anchors, indices, threshold)
 		
 		# full norms of all others
-		for i in range(i+1, len(self)-1):
-			anchors = (self[i],self[i+1])
+		for j in range(i+1, len(self)-1):
+			anchors = (self[j],self[j+1])
 			norm_sq += norm_sq_interval(anchors, indices)
 		
 		return np.sqrt(norm_sq)
@@ -797,8 +796,8 @@ class CubicHermiteSpline(list):
 		sp = scalar_product_partial(anchors, indices_1, indices_2, threshold)
 		
 		# full scalar product of all others
-		for i in range(i+1, len(self)-1):
-			anchors = (self[i],self[i+1])
+		for j in range(i+1, len(self)-1):
+			anchors = (self[j],self[j+1])
 			sp += scalar_product_interval(anchors, indices_1, indices_2)
 		
 		return sp
@@ -813,7 +812,7 @@ class CubicHermiteSpline(list):
 	
 	def subtract(self, indices_1, indices_2, factor):
 		"""
-		Substract the spline for `indices_2` multiplied by `factor` from the spline for `indices_1`.
+		Subtract the spline for `indices_2` multiplied by `factor` from the spline for `indices_1`.
 		"""
 		for anchor in self:
 			anchor.state[indices_1] -= factor*anchor.state[indices_2]
@@ -853,7 +852,7 @@ class CubicHermiteSpline(list):
 		match_anchors(self,other)
 		assert self.times == other.times
 		
-		for i,anchor in enumerate(other):
+		for i,_anchor in enumerate(other):
 			self[i].state += other[i].state
 			self[i].diff  += other[i].diff
 	
@@ -892,7 +891,7 @@ class CubicHermiteSpline(list):
 		kwargs.setdefault("markevery",resolution)
 		values = self.get_state(plot_times)
 		return [
-				axes.plot( plot_times, values[:,c], label=f"Component {c}", *args, **kwargs )
+				axes.plot( plot_times, values[:,c], *args, label=f"Component {c}", **kwargs )
 				for c in (components)
 			]
 

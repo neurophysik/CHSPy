@@ -1,14 +1,15 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
 
-from chspy import CubicHermiteSpline, scalar_product_interval, scalar_product_partial, norm_sq_interval, norm_sq_partial, interpolate, interpolate_diff, extrema_from_anchors, join
-from chspy._chspy import rel_dist
+import unittest
 
+import numpy as np
 import symengine
 import sympy
-import numpy as np
 from numpy.testing import assert_allclose
-import unittest
+
+from chspy import CubicHermiteSpline, extrema_from_anchors, interpolate, interpolate_diff, join, norm_sq_interval, norm_sq_partial, scalar_product_interval, scalar_product_partial
+from chspy._chspy import rel_dist
+
 
 class rel_dist_test(unittest.TestCase):
 	def test_rel_dist(self):
@@ -17,8 +18,9 @@ class rel_dist_test(unittest.TestCase):
 
 
 m = 4
+rng = np.random.default_rng()
 
-coeff = np.random.random((m,4))
+coeff = rng.random((m,4))
 poly = [lambda x, j=j: sum(coeff[j]*(x**np.arange(4))) for j in range(m)]
 diff = [lambda x, j=j: sum(np.arange(1,4)*coeff[j,1:]*(x**np.arange(3))) for j in range(m)]
 
@@ -38,8 +40,8 @@ spline = CubicHermiteSpline(m, [
 		),
 		(
 			2.0,
-			np.random.random(m),
-			np.random.random(m),
+			rng.random(m),
+			rng.random(m),
 		),
 	])
 
@@ -86,17 +88,17 @@ class interpolation_test(unittest.TestCase):
 	
 	def test_interpolate_anchors(self):
 		copy = spline.copy()
-		for t in np.random.uniform( spline[0].time-1, spline[-1].time+1, 20 ):
+		for t in rng.uniform( spline[0].time-1, spline[-1].time+1, 20 ):
 			copy.interpolate_anchor(t)
 		
-		for t in np.random.uniform( spline[0].time-2, spline[-1].time+2, 40 ):
+		for t in rng.uniform( spline[0].time-2, spline[-1].time+2, 40 ):
 			assert_allclose( copy.get_state(t), spline.get_state(t) )
 
 
 class get_anchors_test(unittest.TestCase):
 	def test_get_anchors(self):
 		for s in range(len(spline)-1):
-			r = np.random.random()
+			r = rng.random()
 			t = r*spline[s][0] + (1-r)*spline[s+1][0]
 			anchors = spline.get_anchors(t)
 			self.assertEqual(anchors[0], spline[s])
@@ -120,7 +122,7 @@ class metrics_test(unittest.TestCase):
 		self.spline = spline.copy()
 	
 	def test_compare_norm_with_brute_force(self):
-		delay = np.random.uniform(0.0,2.0)
+		delay = rng.uniform(0.0,2.0)
 		end = spline[-1][0]
 		start = end - delay
 		
@@ -138,7 +140,7 @@ class metrics_test(unittest.TestCase):
 		self.assertAlmostEqual(norm, np.sqrt(bf_norm_sq),4)
 		
 	def test_compare_sp_with_brute_force(self):
-		delay = np.random.uniform(0.0,2.0)
+		delay = rng.uniform(0.0,2.0)
 		end = spline[-1][0]
 		start = end - delay
 		
@@ -149,11 +151,11 @@ class metrics_test(unittest.TestCase):
 		for t in np.linspace(start,end,N):
 			anchors = self.spline.get_anchors(t)
 			bf_sp_sq += (
-				  interpolate(t, 0, anchors)
+				interpolate(t, 0, anchors)
 				* interpolate(t, 2, anchors)
 				* factor)
 			bf_sp_sq += (
-				  interpolate(t, 1, anchors)
+				interpolate(t, 1, anchors)
 				* interpolate(t, 3, anchors)
 				* factor)
 		
@@ -164,8 +166,8 @@ class metrics_test(unittest.TestCase):
 	def test_untrue_partials_norms(self):
 		for i in range(len(self.spline)-1):
 			anchors = (self.spline[i], self.spline[i+1])
-			start = np.random.randint(0,m-1)
-			length = np.random.randint(1,m-start)
+			start = rng.integers(0,m-1)
+			length = rng.integers(1,m-start)
 			indizes = list(range(start, start+length))
 			norm = norm_sq_interval(anchors, indizes)
 			partial_norm = norm_sq_partial(anchors, indizes, anchors[0][0])
@@ -174,9 +176,9 @@ class metrics_test(unittest.TestCase):
 	def test_untrue_partials_sp(self):
 		for i in range(len(self.spline)-1):
 			anchors = (self.spline[i], self.spline[i+1])
-			start_1 = np.random.randint(0,m-1)
-			start_2 = np.random.randint(0,m-1)
-			length = np.random.randint(1,m-max(start_1, start_2))
+			start_1 = rng.integers(0,m-1)
+			start_2 = rng.integers(0,m-1)
+			length = rng.integers(1,m-max(start_1, start_2))
 			indizes_1 = list(range(start_1, start_1+length))
 			indizes_2 = list(range(start_2, start_2+length))
 			sp = scalar_product_interval(anchors, indizes_1, indizes_2)
@@ -185,7 +187,7 @@ class metrics_test(unittest.TestCase):
 
 class truncation_test(unittest.TestCase):
 	def test_truncation(self):
-		truncation_time = np.random.uniform(spline[-2][0],spline[-1][0])
+		truncation_time = rng.uniform(spline[-2][0],spline[-1][0])
 		truncated_spline = spline.copy()
 		truncated_spline.truncate(truncation_time)
 		
@@ -207,11 +209,11 @@ class truncation_test(unittest.TestCase):
 class extrema_test(unittest.TestCase):
 	def test_given_extrema(self):
 		n = 100
-		positions = sorted(np.random.random(2))
-		state = np.random.random(n)
+		positions = sorted(rng.random(2))
+		state = rng.random(n)
 		spline = CubicHermiteSpline(n, [
 				( positions[0], state                       , np.zeros(n) ),
-				( positions[1], state+np.random.uniform(0,5), np.zeros(n) ),
+				( positions[1], state+rng.uniform(0,5), np.zeros(n) ),
 			])
 		result = extrema_from_anchors(spline)
 		assert_allclose(result.arg_min,spline[0].time)
@@ -237,8 +239,8 @@ class extrema_test(unittest.TestCase):
 	def test_arbitrary_anchors(self):
 		n = 100
 		spline = CubicHermiteSpline(n, [
-				(time,np.random.normal(0,1,n),np.random.normal(0,0.1,n))
-				for time in sorted(np.random.uniform(-10,10,2))
+				(time,rng.normal(0,1,n),rng.normal(0,0.1,n))
+				for time in sorted(rng.uniform(-10,10,2))
 			])
 		
 		times = np.linspace(spline[0].time,spline[1].time,10000)
@@ -254,11 +256,11 @@ class extrema_test(unittest.TestCase):
 		for _ in range(10):
 			n = 100
 			spline = CubicHermiteSpline(n, [
-					(time,np.random.normal(0,1,n),np.random.normal(0,0.1,n))
-					for time in sorted(np.random.uniform(-10,10,3))
+					(time,rng.normal(0,1,n),rng.normal(0,0.1,n))
+					for time in sorted(rng.uniform(-10,10,3))
 				])
 			
-			beginning, end = sorted(np.random.uniform(spline[0].time,spline[-1].time,2))
+			beginning, end = sorted(rng.uniform(spline[0].time,spline[-1].time,2))
 			times = np.linspace(beginning,end,10000)
 			values = np.vstack([ spline.get_state(time) for time in times ])
 			
@@ -271,12 +273,12 @@ class extrema_test(unittest.TestCase):
 class TestSolving(unittest.TestCase):
 	def test_random_function(self):
 		for solve_derivative in [False,True]:
-			roots = np.sort(np.random.normal(size=5))
-			value = np.random.normal()
+			roots = np.sort(rng.normal(size=5))
+			value = rng.normal()
 			t = symengine.Symbol("t")
 			function = np.prod([t-root for root in roots]) + value
 			if solve_derivative:
-				function = sympy.integrate(function,[t]) + np.random.random()
+				function = sympy.integrate(function,[t]) + rng.random()
 			
 			i = 1
 			spline = CubicHermiteSpline.from_func(
@@ -290,7 +292,7 @@ class TestSolving(unittest.TestCase):
 			sol_times = [ sol[0] for sol in solutions ]
 			assert_allclose( sol_times, roots, atol=1e-3 )
 			if solve_derivative:
-				for time,diff in solutions:
+				for _time,diff in solutions:
 					self.assertAlmostEqual( value, diff, places=5 )
 			else:
 				assert_allclose( spline.get_state(sol_times)[:,i], value )

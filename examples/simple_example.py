@@ -1,5 +1,7 @@
-from chspy import CubicHermiteSpline
 from matplotlib.pyplot import subplots
+
+from chspy import CubicHermiteSpline
+
 
 spline = CubicHermiteSpline(n=3)
 
