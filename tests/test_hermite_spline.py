@@ -292,7 +292,7 @@ class TestSolving(unittest.TestCase):
 			sol_times = [ sol[0] for sol in solutions ]
 			assert_allclose( sol_times, roots, atol=1e-3 )
 			if solve_derivative:
-				for time,diff in solutions:
+				for _time,diff in solutions:
 					self.assertAlmostEqual( value, diff, places=5 )
 			else:
 				assert_allclose( spline.get_state(sol_times)[:,i], value )

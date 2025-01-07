@@ -480,7 +480,7 @@ class CubicHermiteSpline(list):
 		"""
 		
 		if self:
-			warn("The spline already contains points. This will remove them. Be sure that you really want this.")
+			warn("The spline already contains points. This will remove them. Be sure that you really want this.", stacklevel=2)
 			self.clear()
 		
 		self.append(( time-1., state, np.zeros_like(state) ))
@@ -496,7 +496,7 @@ class CubicHermiteSpline(list):
 		assert len(times_of_interest)>=2, "I need at least two time points of interest."
 		
 		if self:
-			warn("The spline already contains points. This will remove them. Be sure that you really want this. If not, consider using `from_func`.")
+			warn("The spline already contains points. This will remove them. Be sure that you really want this. If not, consider using `from_func`.", stacklevel=2)
 			self.clear()
 		
 		# A happy anchor is sufficiently interpolated by its neighbours, temporally close to them, or at the border of the interval.
@@ -778,8 +778,8 @@ class CubicHermiteSpline(list):
 		norm_sq = norm_sq_partial(anchors, indices, threshold)
 		
 		# full norms of all others
-		for i in range(i+1, len(self)-1):
-			anchors = (self[i],self[i+1])
+		for j in range(i+1, len(self)-1):
+			anchors = (self[j],self[j+1])
 			norm_sq += norm_sq_interval(anchors, indices)
 		
 		return np.sqrt(norm_sq)
@@ -796,8 +796,8 @@ class CubicHermiteSpline(list):
 		sp = scalar_product_partial(anchors, indices_1, indices_2, threshold)
 		
 		# full scalar product of all others
-		for i in range(i+1, len(self)-1):
-			anchors = (self[i],self[i+1])
+		for j in range(i+1, len(self)-1):
+			anchors = (self[j],self[j+1])
 			sp += scalar_product_interval(anchors, indices_1, indices_2)
 		
 		return sp
@@ -852,7 +852,7 @@ class CubicHermiteSpline(list):
 		match_anchors(self,other)
 		assert self.times == other.times
 		
-		for i,anchor in enumerate(other):
+		for i,_anchor in enumerate(other):
 			self[i].state += other[i].state
 			self[i].diff  += other[i].diff
 	
@@ -891,7 +891,7 @@ class CubicHermiteSpline(list):
 		kwargs.setdefault("markevery",resolution)
 		values = self.get_state(plot_times)
 		return [
-				axes.plot( plot_times, values[:,c], label=f"Component {c}", *args, **kwargs )
+				axes.plot( plot_times, values[:,c], *args, label=f"Component {c}", **kwargs )
 				for c in (components)
 			]
 
