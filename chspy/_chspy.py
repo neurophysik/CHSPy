@@ -132,7 +132,7 @@ def norm_sq_interval(anchors, indices):
 
 def norm_sq_partial(anchors, indices, start):
 	"""
-	Returns the sqared norm of the interpolant of `anchors` for the `indices`, but only taking into account the time after `start`.
+	Returns the squared norm of the interpolant of `anchors` for the `indices`, but only taking into account the time after `start`.
 	"""
 	q = (anchors[1].time-anchors[0].time)
 	z = (start-anchors[1].time) / q
@@ -812,7 +812,7 @@ class CubicHermiteSpline(list):
 	
 	def subtract(self, indices_1, indices_2, factor):
 		"""
-		Substract the spline for `indices_2` multiplied by `factor` from the spline for `indices_1`.
+		Subtract the spline for `indices_2` multiplied by `factor` from the spline for `indices_1`.
 		"""
 		for anchor in self:
 			anchor.state[indices_1] -= factor*anchor.state[indices_2]
