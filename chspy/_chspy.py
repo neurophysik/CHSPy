@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
 
 from bisect import bisect_left, bisect_right, insort
 from warnings import warn
@@ -203,7 +202,7 @@ def scalar_product_partial(anchors, indices_1, indices_2, start):
 			vector_2, [1,2]
 		)*q
 
-class Extrema(object):
+class Extrema:
 	"""
 	Class for containing the extrema and their positions in `n` dimensions. These can be accessed via the attributes `minima`, `maxima`, `arg_min`, and `arg_max`.
 	"""
