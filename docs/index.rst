@@ -1,11 +1,11 @@
 CHSPy (Cubic Hermite Splines for Python)
 ========================================
 
-This module provides Python tools for `cubic Hermite splines <https://en.wikipedia.org/wiki/Cubic_Hermite_spline>`_ with one argument (time) and multiple values (:math:`ℝ→ℝ^n`).
-It was branched of from `JiTCDDE <http://github.com/neurophysik/jitcdde>`_, which uses it for representing the past of a delay differential equation.
+This module provides Python tools for `cubic Hermite splines <https://en.wikipedia.org/wiki/Cubic_Hermite_spline>`__ with one argument (time) and multiple values (:math:`ℝ→ℝ^n`).
+It was branched of from `JiTCDDE <https://github.com/neurophysik/jitcdde>`__, which uses it for representing the past of a delay differential equation.
 CHSPy is not optimised for efficiency, however it should be fairly effective for high-dimensionally valued splines.
 
-Each spline (`CubicHermiteSpline`) is stored as a series of *anchors* (using the `Anchor` class) each of which contains:
+Each spline (:class:`~_chspy.CubicHermiteSpline`) is stored as a series of *anchors* (using the :class:`~_chspy.Anchor` class) each of which contains:
 
 * a time point (`time`),
 * an :math:`n`-dimensional state (`state`),
