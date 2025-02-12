@@ -44,6 +44,8 @@ jobs:
         path: dist/
     - name: Publish distribution
       uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        verbose: true
 
   publish-to-testpypi:
     name: Publish to TestPyPI
