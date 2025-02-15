@@ -66,6 +66,12 @@ jobs:
       with:
         name: python-package-distributions
         path: dist/
+    # Trying to rename files for compatibility as per: https://stackoverflow.com/a/79437880/2127008
+    - name: Compatibility dist renaming
+      run: |
+        for file in dist/*; do
+          mv "$file" "${file%%.*}.$(date +%s).${file##*.}"
+        done
     - name: Publish distribution to TestPyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
