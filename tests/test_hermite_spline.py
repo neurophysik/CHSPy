@@ -18,7 +18,7 @@ class rel_dist_test(unittest.TestCase):
 
 
 m = 4
-rng = np.random.default_rng(seed=42)
+rng = np.random.default_rng(seed=43)
 
 coeff = rng.random((m,4))
 poly = [lambda x, j=j: sum(coeff[j]*(x**np.arange(4))) for j in range(m)]
