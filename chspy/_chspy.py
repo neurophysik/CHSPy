@@ -521,7 +521,7 @@ class CubicHermiteSpline(list):
 				raise ValueError("Expressions must contain at most one free symbol")
 			
 			def get_anchor(time):
-				substitutions = {symbol:time for symbol in symbols}
+				substitutions = dict.fromkeys(symbols, time)
 				evaluate = lambda expr: expr.subs(substitutions).evalf(tol)
 				return unhappy_anchor(
 						time,
